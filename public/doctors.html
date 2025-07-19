@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Find Doctors | Smart Health</title>
+    <link rel="stylesheet" href="../src/css/style.css" />
+    <link rel="stylesheet" href="../src/css/glass.css" />
+    <script src="../src/js/firebase.js" defer></script>
+    <script src="../src/js/app.js" defer></script>
+  </head>
+  <body>
+    <div class="glass-container">
+      <!-- Header with Back Button -->
+      <div class="page-header">
+        <a href="results.html" class="back-btn">← Back</a>
+        <h1>Recommended Specialists</h1>
+      </div>
+
+      <!-- Specialty Filter -->
+      <div class="specialty-filter">
+        <label for="specialtySelect">Filter by Specialty:</label>
+        <select id="specialtySelect">
+          <option value="all">All Specialties</option>
+          <option value="cardiologist">Cardiology</option>
+          <option value="general">General Practice</option>
+          <!-- More options -->
+        </select>
+      </div>
+
+      <!-- Doctors List -->
+      <div class="doctors-list" id="doctorsList">
+        <!-- Sample Doctor Card (will be populated dynamically) -->
+        <div class="doctor-card">
+          <div class="doctor-avatar">DR</div>
+          <div class="doctor-info">
+            <h3>Dr. Sarah Johnson</h3>
+            <p class="specialty">General Practitioner</p>
+            <p class="location">5km away · St. Mary's Hospital</p>
+            <div class="rating">★★★★☆ (124 reviews)</div>
+          </div>
+          <button class="book-btn sky-blue-btn">Book</button>
+        </div>
+        <!-- More doctor cards will be added here -->
+      </div>
+    </div>
+
+    <script>
+      // Get specialty from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const specialty = urlParams.get("specialty");
+
+      // Set filter if specialty exists
+      if (specialty) {
+        document.getElementById("specialtySelect").value = specialty.includes(
+          "Heart"
+        )
+          ? "cardiologist"
+          : "general";
+      }
+
+      // Sample data - replace with Firestore query
+      const doctors = [
+        {
+          name: "Dr. Yvonie Yvonie",
+          specialty: "General Practitioner",
+          hospital: "Kwekwe Hospital",
+          distance: "5km",
+          rating: 4,
+          reviews: 124,
+          available: true,
+        },
+        {
+          name: "Dr. Michael Michael",
+          specialty: "Cardiologist",
+          hospital: "Gweru City Heart Center",
+          distance: "38km",
+          rating: 4.7,
+          reviews: 89,
+          available: false,
+        },
+      ];
+
+      // Render doctors
+      const doctorsList = document.getElementById("doctorsList");
+      doctorsList.innerHTML = ""; // Clear sample card
+
+      doctors.forEach((doctor) => {
+        const card = document.createElement("div");
+        card.className = "doctor-card";
+
+        card.innerHTML = `
+                <div class="doctor-avatar">${doctor.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}</div>
+                <div class="doctor-info">
+                    <h3>${doctor.name}</h3>
+                    <p class="specialty">${doctor.specialty}</p>
+                    <p class="location">${doctor.distance} away · ${
+          doctor.hospital
+        }</p>
+                    <div class="rating">
+                        ${"★".repeat(Math.floor(doctor.rating))}${"☆".repeat(
+          5 - Math.ceil(doctor.rating)
+        )} 
+                        (${doctor.reviews} reviews)
+                    </div>
+                </div>
+                <button class="book-btn sky-blue-btn ${
+                  doctor.available ? "" : "disabled"
+                }" 
+                        ${doctor.available ? "" : "disabled"}>
+                    ${doctor.available ? "Book Now" : "Unavailable"}
+                </button>
+            `;
+
+        doctorsList.appendChild(card);
+      });
+
+      // Filter functionality
+      document
+        .getElementById("specialtySelect")
+        .addEventListener("change", (e) => {
+          const specialty = e.target.value;
+          console.log(`Filter by: ${specialty}`);
+          // Implement actual filtering here
+        });
+    </script>
+  </body>
+</html>

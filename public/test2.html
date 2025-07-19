@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartHealthPredictor | Dashboard</title>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    <!-- Flatpickr for Calendar -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <style>
+      :root {
+        --sky-blue: #87ceeb;
+        --deep-blue: #1e90ff;
+        --glass-card: rgba(255, 255, 255, 0.2);
+        --apple-font: -apple-system, BlinkMacSystemFont, sans-serif;
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --text-light: #777;
+      }
+
+      body {
+        font-family: var(--apple-font);
+        margin: 0;
+        color: #333;
+        min-height: 100vh;
+        background: linear-gradient(
+            rgba(135, 206, 235, 0.85),
+            rgba(30, 144, 255, 0.85)
+          ),
+          url("assets/medical-bg.jpg") no-repeat center center fixed;
+        background-size: cover;
+        position: relative;
+      }
+
+      /* [Previous CSS remains the same until .profile-section] */
+
+      /* Enhanced Profile Editor */
+      .profile-form {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      /* Calendar View */
+      .calendar-view {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .calendar-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .calendar-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+      }
+
+      .calendar-header {
+        font-weight: 600;
+        text-align: center;
+        padding: 0.5rem;
+      }
+
+      .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .calendar-day:hover {
+        background: rgba(30, 144, 255, 0.1);
+      }
+
+      .calendar-day.active {
+        background: var(--deep-blue);
+        color: white;
+      }
+
+      .calendar-day.has-appointment::after {
+        content: "";
+        position: absolute;
+        bottom: 0.25rem;
+        width: 0.5rem;
+        height: 0.5rem;
+        background: var(--deep-blue);
+        border-radius: 50%;
+      }
+
+      /* API Status Indicator */
+      .api-status {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .api-status.connected::before {
+        content: "";
+        width: 0.75rem;
+        height: 0.75rem;
+        background: #4caf50;
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- [Previous HTML remains the same until profile-content] -->
+
+    <div id="profile-content" style="display: none">
+      <h1>My Profile</h1>
+      <p>Manage your account and settings</p>
+
+      <div class="profile-section">
+        <div class="profile-sidebar">
+          <img
+            src="assets/user-avatar.jpg"
+            alt="User Avatar"
+            class="user-avatar"
+            id="userAvatar"
+          />
+          <h3 style="text-align: center" id="userName">John Doe</h3>
+          <p style="text-align: center; color: var(--text-light)">
+            Member since June 2023
+          </p>
+          <button
+            class="action-btn"
+            style="width: 100%; margin-top: 1rem"
+            id="changeAvatarBtn"
+          >
+            <i class="ph ph-image"></i>
+            Change Photo
+          </button>
+        </div>
+
+        <div>
+          <div class="profile-form" id="profileForm">
+            <h3>Personal Information</h3>
+            <div class="form-group">
+              <label for="editName">Full Name</label>
+              <input
+                type="text"
+                id="editName"
+                class="form-control"
+                value="John Doe"
+              />
+            </div>
+            <div class="form-group">
+              <label for="editEmail">Email</label>
+              <input
+                type="email"
+                id="editEmail"
+                class="form-control"
+                value="john.doe@example.com"
+              />
+            </div>
+            <div class="form-group">
+              <label for="editPhone">Phone</label>
+              <input
+                type="tel"
+                id="editPhone"
+                class="form-control"
+                value="(555) 123-4567"
+              />
+            </div>
+            <div class="form-group">
+              <label for="editDob">Date of Birth</label>
+              <input
+                type="date"
+                id="editDob"
+                class="form-control"
+                value="1985-01-15"
+              />
+            </div>
+            <div class="form-actions">
+              <button class="action-btn" id="saveProfileBtn">
+                <i class="ph ph-floppy-disk"></i>
+                Save Changes
+              </button>
+              <button
+                class="action-btn"
+                style="background: #f5f5f5; color: #333"
+                id="cancelEditBtn"
+              >
+                <i class="ph ph-x"></i>
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <div class="prediction-card">
+            <h3>Security</h3>
+            <button
+              class="action-btn"
+              style="width: 100%"
+              id="changePasswordBtn"
+            >
+              <i class="ph ph-lock-key"></i>
+              Change Password
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Modal -->
+    <div class="modal" id="calendarModal" style="display: none">
+      <div class="modal-content">
+        <div class="calendar-view">
+          <div class="calendar-nav">
+            <button id="prevMonth"><i class="ph ph-caret-left"></i></button>
+            <h3 class="calendar-title" id="calendarMonth">June 2023</h3>
+            <button id="nextMonth"><i class="ph ph-caret-right"></i></button>
+          </div>
+          <div class="calendar-grid" id="calendarHeader">
+            <div class="calendar-header">Sun</div>
+            <div class="calendar-header">Mon</div>
+            <div class="calendar-header">Tue</div>
+            <div class="calendar-header">Wed</div>
+            <div class="calendar-header">Thu</div>
+            <div class="calendar-header">Fri</div>
+            <div class="calendar-header">Sat</div>
+          </div>
+          <div class="calendar-grid" id="calendarDays"></div>
+        </div>
+        <div class="appointment-slots" id="appointmentSlots"></div>
+      </div>
+    </div>
+
+    <!-- API Status Indicator -->
+    <div class="api-status connected" id="apiStatus">API Connected</div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+      // [Previous JavaScript remains the same until profile section]
+
+      // Enhanced Profile Editor
+      const profileForm = document.getElementById("profileForm");
+      const saveProfileBtn = document.getElementById("saveProfileBtn");
+      const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+      const userName = document.getElementById("userName");
+      const userAvatar = document.getElementById("userAvatar");
+
+      changeAvatarBtn.addEventListener("click", () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              userAvatar.src = event.target.result;
+              showToast("Profile photo updated successfully");
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      });
+
+      saveProfileBtn.addEventListener("click", () => {
+        // In a real app, this would save to your backend
+        userName.textContent = document.getElementById("editName").value;
+        showToast("Profile updated successfully");
+
+        // Simulate API call
+        simulateAPICall("SaveProfile");
+      });
+
+      // Calendar Implementation
+      const calendarModal = document.getElementById("calendarModal");
+      const calendarDays = document.getElementById("calendarDays");
+      const calendarMonth = document.getElementById("calendarMonth");
+      const prevMonthBtn = document.getElementById("prevMonth");
+      const nextMonthBtn = document.getElementById("nextMonth");
+
+      let currentDate = new Date();
+      let currentMonth = currentDate.getMonth();
+      let currentYear = currentDate.getFullYear();
+
+      function renderCalendar(month, year) {
+        calendarDays.innerHTML = "";
+        calendarMonth.textContent = new Date(year, month).toLocaleDateString(
+          "en-US",
+          {
+            month: "long",
+            year: "numeric",
+          }
+        );
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDay = firstDay.getDay();
+
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < startingDay; i++) {
+          const emptyDay = document.createElement("div");
+          emptyDay.className = "calendar-day";
+          calendarDays.appendChild(emptyDay);
+        }
+
+        // Add days of the month
+        for (let i = 1; i <= daysInMonth; i++) {
+          const dayElement = document.createElement("div");
+          dayElement.className = "calendar-day";
+          dayElement.textContent = i;
+
+          // Mark days with appointments (demo: mark 5th and 15th)
+          if (i === 5 || i === 15) {
+            dayElement.classList.add("has-appointment");
+          }
+
+          // Mark current day
+          if (
+            i === currentDate.getDate() &&
+            month === currentDate.getMonth() &&
+            year === currentDate.getFullYear()
+          ) {
+            dayElement.classList.add("active");
+          }
+
+          dayElement.addEventListener("click", () => {
+            document.querySelectorAll(".calendar-day").forEach((day) => {
+              day.classList.remove("active");
+            });
+            dayElement.classList.add("active");
+            showAppointmentSlots(i, month, year);
+          });
+
+          calendarDays.appendChild(dayElement);
+        }
+      }
+
+      function showAppointmentSlots(day, month, year) {
+        const date = new Date(year, month, day);
+        const slotsContainer = document.getElementById("appointmentSlots");
+        slotsContainer.innerHTML = `<h3>Available Slots for ${date.toLocaleDateString()}</h3>`;
+
+        // Demo slots
+        const slots = ["9:00 AM", "11:30 AM", "2:00 PM", "4:30 PM"];
+
+        slots.forEach((slot) => {
+          const slotBtn = document.createElement("button");
+          slotBtn.className = "action-btn";
+          slotBtn.style.width = "100%";
+          slotBtn.style.margin = "0.5rem 0";
+          slotBtn.innerHTML = `<i class="ph ph-clock"></i> ${slot}`;
+          slotBtn.addEventListener("click", () => {
+            showToast(
+              `Appointment booked for ${date.toLocaleDateString()} at ${slot}`
+            );
+            calendarModal.style.display = "none";
+          });
+          slotsContainer.appendChild(slotBtn);
+        });
+      }
+
+      // Calendar navigation
+      prevMonthBtn.addEventListener("click", () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        renderCalendar(currentMonth, currentYear);
+      });
+
+      nextMonthBtn.addEventListener("click", () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear);
+      });
+
+      // Initialize calendar
+      renderCalendar(currentMonth, currentYear);
+
+      // API Simulation
+      function simulateAPICall(endpoint) {
+        const apiStatus = document.getElementById("apiStatus");
+        apiStatus.textContent = `Calling ${endpoint}...`;
+
+        setTimeout(() => {
+          apiStatus.classList.add("connected");
+          apiStatus.textContent = `${endpoint} Success`;
+
+          setTimeout(() => {
+            apiStatus.textContent = "API Connected";
+          }, 2000);
+        }, 1000);
+      }
+
+      // Book Appointment button handler
+      document.addEventListener("click", (e) => {
+        if (e.target.closest(".book-appointment-btn")) {
+          calendarModal.style.display = "block";
+          renderCalendar(currentMonth, currentYear);
+        }
+      });
+
+      // Close modal when clicking outside
+      window.addEventListener("click", (e) => {
+        if (e.target === calendarModal) {
+          calendarModal.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>

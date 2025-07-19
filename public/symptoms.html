@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Symptom Checker | Smart Health</title>
+    <link rel="stylesheet" href="../src/css/style.css" />
+    <link rel="stylesheet" href="../src/css/glass.css" />
+    <script src="../src/js/firebase.js" defer></script>
+    <script src="../src/js/predictions.js" defer></script>
+  </head>
+  <body>
+    <div class="glass-container">
+      <h1><span class="back-btn">←</span> SYMPTOM CHECKER</h1>
+      <div class="symptom-input-container">
+        <input
+          type="text"
+          id="symptomInput"
+          placeholder="Type your symptoms..."
+        />
+        <div id="symptomTags" class="symptom-tags"></div>
+      </div>
+      <div class="body-map">
+        <!-- Body map SVG would go here -->
+        <div class="placeholder-body-map"></div>
+      </div>
+      <button id="predictBtn" class="sky-blue-btn large-btn" disabled>
+        Predict Disease
+      </button>
+    </div>
+  </body>
+</html>

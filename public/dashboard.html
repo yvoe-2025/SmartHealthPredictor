@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartHealthPredictor | Dashboard</title>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    <style>
+      :root {
+        --sky-blue: #87ceeb;
+        --deep-blue: #1e90ff;
+        --glass-card: rgba(255, 255, 255, 0.2);
+        --apple-font: -apple-system, BlinkMacSystemFont, sans-serif;
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      body {
+        font-family: var(--apple-font);
+        margin: 0;
+        color: #333;
+        min-height: 100vh;
+        background: linear-gradient(
+            rgba(135, 206, 235, 0.85),
+            rgba(30, 144, 255, 0.85)
+          ),
+          url("assets/images/medical-bg.png") no-repeat center center fixed;
+        background-size: cover;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(2px);
+        z-index: -1;
+      }
+
+      .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .glass-card {
+        background: var(--glass-card);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+      }
+
+      .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .nav-panel {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        gap: 1rem;
+      }
+
+      .nav-item {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        font-weight: 500;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+      }
+
+      .nav-item.active {
+        background: white;
+        color: var(--deep-blue);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-item i {
+        font-size: 1.2rem;
+      }
+
+      .symptom-checker {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .search-container {
+        position: relative;
+      }
+
+      #symptomSearch {
+        width: 100%;
+        padding: 1rem 1rem 1rem 2.5rem;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--deep-blue);
+      }
+
+      .body-map {
+        display: grid;
+        place-items: center;
+      }
+
+      .body-map img {
+        max-width: 100%;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .body-map img:hover {
+        transform: scale(1.02);
+      }
+
+      .selected-symptoms {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .symptom-tag {
+        background: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .predict-btn {
+        background: white;
+        color: var(--deep-blue);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 2rem auto;
+        justify-content: center;
+      }
+
+      .predict-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .predict-btn i {
+        font-size: 1.2rem;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .symptom-checker {
+          grid-template-columns: 1fr;
+        }
+
+        .nav-panel {
+          flex-direction: column;
+        }
+
+        .nav-item {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="nav-panel">
+        <div class="nav-item active">
+          <i class="ph ph-stethoscope"></i>
+          Symptom Checker
+        </div>
+        <div class="nav-item">
+          <i class="ph ph-clipboard-text"></i>
+          My Predictions
+        </div>
+        <div class="nav-item">
+          <i class="ph ph-calendar"></i>
+          Appointments
+        </div>
+        <div class="nav-item">
+          <i class="ph ph-user"></i>
+          Profile
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <h1>Symptom Checker</h1>
+        <p>Describe your symptoms to get personalized health insights</p>
+
+        <div class="symptom-checker">
+          <div class="search-container">
+            <i class="ph ph-magnifying-glass search-icon"></i>
+            <input
+              type="text"
+              id="symptomSearch"
+              placeholder="Search symptoms..."
+            />
+            <div class="selected-symptoms" id="selectedSymptoms">
+              <!-- Symptoms will appear here as tags -->
+            </div>
+          </div>
+
+          <div class="body-map">
+            <img src="assets/body-map.png" alt="Human body map" id="bodyMap" />
+          </div>
+        </div>
+
+        <button class="predict-btn" id="predictBtn">
+          <i class="ph ph-pulse"></i>
+          Analyze Symptoms
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Sample symptom data
+      const symptomsDatabase = [
+        "headache",
+        "fever",
+        "cough",
+        "fatigue",
+        "nausea",
+        "dizziness",
+        "chest pain",
+        "shortness of breath",
+        "joint pain",
+        "sore throat",
+        "rash",
+        "abdominal pain",
+      ];
+
+      // DOM Elements
+      const symptomSearch = document.getElementById("symptomSearch");
+      const selectedSymptoms = document.getElementById("selectedSymptoms");
+      const bodyMap = document.getElementById("bodyMap");
+      const predictBtn = document.getElementById("predictBtn");
+      const navItems = document.querySelectorAll(".nav-item");
+
+      // Selected symptoms array
+      let selectedSymptomsList = [];
+
+      // Initialize symptom search autocomplete
+      symptomSearch.addEventListener("input", (e) => {
+        // Implement autocomplete logic here
+      });
+
+      // Add symptom when pressing Enter
+      symptomSearch.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && symptomSearch.value.trim()) {
+          addSymptom(symptomSearch.value.trim());
+          symptomSearch.value = "";
+        }
+      });
+
+      // Add symptom to list
+      function addSymptom(symptom) {
+        if (!selectedSymptomsList.includes(symptom)) {
+          selectedSymptomsList.push(symptom);
+          renderSelectedSymptoms();
+        }
+      }
+
+      // Render selected symptoms as tags
+      function renderSelectedSymptoms() {
+        selectedSymptoms.innerHTML = "";
+        selectedSymptomsList.forEach((symptom) => {
+          const tag = document.createElement("div");
+          tag.className = "symptom-tag";
+          tag.innerHTML = `
+                    <i class="ph ph-plus-circle"></i>
+                    ${symptom}
+                    <i class="ph ph-x" onclick="removeSymptom('${symptom}')" style="cursor:pointer"></i>
+                `;
+          selectedSymptoms.appendChild(tag);
+        });
+
+        // Enable/disable predict button
+        predictBtn.disabled = selectedSymptomsList.length < 2;
+      }
+
+      // Remove symptom
+      window.removeSymptom = function (symptom) {
+        selectedSymptomsList = selectedSymptomsList.filter(
+          (s) => s !== symptom
+        );
+        renderSelectedSymptoms();
+      };
+
+      // Body map click handler
+      bodyMap.addEventListener("click", (e) => {
+        // Implement body part selection logic
+        // This would require an image map or more advanced implementation
+      });
+
+      // Predict button handler
+      predictBtn.addEventListener("click", () => {
+        if (selectedSymptomsList.length >= 2) {
+          // Redirect to results page with symptoms as query params
+          const symptomsParam = encodeURIComponent(
+            JSON.stringify(selectedSymptomsList)
+          );
+          window.location.href = `results.html?symptoms=${symptomsParam}`;
+        } else {
+          alert("Please add at least 2 symptoms for accurate prediction");
+        }
+      });
+
+      // Navigation handler
+      navItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          navItems.forEach((nav) => nav.classList.remove("active"));
+          item.classList.add("active");
+
+          // Here you would load the appropriate content for the selected tab
+          // For now we'll just show a simple alert
+          const tabName = item.textContent.trim();
+          if (tabName !== "Symptom Checker") {
+            alert(`Loading ${tabName} content...`);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Your Results | Smart Health</title>
+    <link rel="stylesheet" href="../src/css/style.css" />
+    <link rel="stylesheet" href="../src/css/glass.css" />
+    <script src="../src/js/firebase.js" defer></script>
+    <script src="../src/js/app.js" defer></script>
+  </head>
+  <body>
+    <div class="glass-container">
+      <!-- Back Button -->
+      <a href="symptoms.html" class="back-btn">← Back</a>
+
+      <!-- Prediction Card -->
+      <div class="result-card sky-blue-bg">
+        <div class="result-header">
+          <h2>Your Health Prediction</h2>
+          <div class="confidence-badge" id="confidenceBadge">Medium</div>
+        </div>
+
+        <div class="prediction-result" id="predictionResult">
+          <!-- Filled by JavaScript -->
+        </div>
+
+        <div class="symptoms-used">
+          <h3>Symptoms Analyzed:</h3>
+          <div class="symptom-chips" id="symptomChips">
+            <!-- Filled by JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button id="saveResultBtn" class="sky-blue-btn">
+          <i class="ph ph-bookmark"></i> Save Result
+        </button>
+        <button id="findDoctorBtn" class="sky-blue-btn outline">
+          <i class="ph ph-user-md"></i> Find Specialist
+        </button>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="recommendations">
+        <h3>Recommended Next Steps</h3>
+        <ul class="recommendation-list" id="recommendationList">
+          <!-- Filled by JavaScript -->
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      // Parse URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const prediction = urlParams.get("prediction");
+      const confidence = urlParams.get("confidence");
+
+      // Update DOM
+      document.getElementById("predictionResult").textContent =
+        prediction || "No prediction available";
+      document.getElementById("confidenceBadge").textContent =
+        confidence || "Unknown";
+
+      // Add sample symptoms (replace with actual data from Firestore)
+      const symptomChips = document.getElementById("symptomChips");
+      ["fever", "headache", "fatigue"].forEach((symptom) => {
+        const chip = document.createElement("span");
+        chip.className = "symptom-chip";
+        chip.textContent = symptom;
+        symptomChips.appendChild(chip);
+      });
+
+      // Add sample recommendations
+      const recommendationList = document.getElementById("recommendationList");
+      [
+        "Drink plenty of fluids",
+        "Get adequate rest",
+        "Monitor temperature every 4 hours",
+        "Consult doctor if symptoms worsen",
+      ].forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        recommendationList.appendChild(li);
+      });
+
+      // Button event listeners
+      document.getElementById("findDoctorBtn").addEventListener("click", () => {
+        window.location.href =
+          "doctors.html?specialty=" + encodeURIComponent(prediction);
+      });
+    </script>
+  </body>
+</html>
