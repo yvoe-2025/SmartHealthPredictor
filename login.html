@@ -280,6 +280,16 @@
       .input-error {
         border-color: var(--accent-color) !important;
       }
+      
+      /* Password error indicator */
+      .password-error {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-color);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+      }
     </style>
   </head>
 
@@ -301,8 +311,11 @@
         <div class="input-group">
           <label for="loginPassword">Password</label>
           <input type="password" id="loginPassword" required />
+          <div id="passwordErrorIndicator" class="password-error" style="display: none;">
+            <i class="ph ph-warning-circle"></i>
+            <span>Incorrect password</span>
+          </div>
           <a href="reset-password.html" class="forgot-password">Forgot password?</a>
-          <div id="loginPasswordError" class="error-message"></div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-full-width" id="loginBtn">
@@ -341,6 +354,11 @@
       const loginPassword = document.getElementById('loginPassword');
       const loginBtn = document.getElementById('loginBtn');
       const toast = document.getElementById('toast');
+      const passwordErrorIndicator = document.getElementById('passwordErrorIndicator');
+
+      // Track password attempts
+      let passwordAttempts = 0;
+      const maxPasswordAttempts = 3;
 
       // Show toast message
       function showToast(message, isError = false) {
@@ -377,6 +395,28 @@
         errorElement.style.display = 'none';
       }
 
+      // Show password error
+      function showPasswordError() {
+        passwordErrorIndicator.style.display = 'flex';
+        loginPassword.classList.add('input-error');
+        passwordAttempts++;
+        
+        if (passwordAttempts >= maxPasswordAttempts) {
+          showToast('Too many incorrect attempts. Try again later.', true);
+          loginBtn.disabled = true;
+          setTimeout(() => {
+            loginBtn.disabled = false;
+            passwordAttempts = 0;
+          }, 30000); // 30 second timeout
+        }
+      }
+
+      // Clear password error
+      function clearPasswordError() {
+        passwordErrorIndicator.style.display = 'none';
+        loginPassword.classList.remove('input-error');
+      }
+
       // Handle login form submission
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -386,7 +426,7 @@
         
         // Clear previous errors
         clearError('loginEmail');
-        clearError('loginPassword');
+        clearPasswordError();
         
         // Basic validation
         if (!email) {
@@ -395,7 +435,7 @@
         }
         
         if (!password) {
-          showError('loginPassword', 'Please enter your password');
+          showPasswordError();
           return;
         }
         
@@ -406,13 +446,6 @@
           // Sign in with email and password
           const userCredential = await auth.signInWithEmailAndPassword(email, password);
           const user = userCredential.user;
-          
-          // Check email verification
-          if (!user.emailVerified) {
-            await auth.signOut();
-            showToast('Please verify your email before logging in. Check your inbox.', true);
-            return;
-          }
           
           // Check if user exists in Firestore
           const userDoc = await db.collection('users').doc(user.uid).get();
@@ -430,54 +463,54 @@
             }, 1500);
           } else {
             await auth.signOut();
-            showToast('Account not properly set up. Please sign up again.', true);
+            showToast('Account not found. Please sign up.', true);
           }
         } catch (error) {
           console.error('Login error:', error);
-          let errorMessage = 'Login failed. Please try again.';
           
-          if (error.code === 'auth/user-not-found') {
+          if (error.code === 'auth/wrong-password') {
+            showPasswordError();
+            showToast('Incorrect password. Please try again.', true);
+          } else if (error.code === 'auth/user-not-found') {
             showError('loginEmail', 'No account found with this email');
-            errorMessage = 'No account found with this email.';
-          } else if (error.code === 'auth/wrong-password') {
-            showError('loginPassword', 'Incorrect password');
-            errorMessage = 'Incorrect password. Please try again.';
+            showToast('No account found with this email.', true);
           } else if (error.code === 'auth/too-many-requests') {
-            errorMessage = 'Too many attempts. Account temporarily locked.';
-          } else if (error.code === 'auth/invalid-email') {
-            showError('loginEmail', 'Invalid email format');
-            errorMessage = 'Please enter a valid email address.';
+            showToast('Too many attempts. Try again later.', true);
+            loginBtn.disabled = true;
+            setTimeout(() => {
+              loginBtn.disabled = false;
+            }, 30000); // 30 second timeout
+          } else {
+            showToast('Login failed. Please try again.', true);
           }
-          
-          showToast(errorMessage, true);
         } finally {
           // Remove loading state
           loginBtn.classList.remove('btn-loading');
         }
       });
 
-      // Check if user is already logged in and verified
+      // Real-time password validation
+      loginPassword.addEventListener('input', () => {
+        if (passwordErrorIndicator.style.display === 'flex') {
+          clearPasswordError();
+        }
+      });
+
+      // Check if user is already logged in
       auth.onAuthStateChanged(async (user) => {
         if (user) {
           try {
-            // Refresh the user's token to get latest email verification status
-            await user.getIdToken(true);
-            
-            if (user.emailVerified) {
-              const userDoc = await db.collection('users').doc(user.uid).get();
-              if (userDoc.exists) {
-                // Update last login timestamp
-                await db.collection('users').doc(user.uid).update({
-                  lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                // Redirect to dashboard
-                window.location.href = 'dashboard.html';
-              }
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+              // Update last login timestamp
+              await db.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              // Redirect to dashboard
+              window.location.href = 'dashboard.html';
             }
           } catch (error) {
             console.error('Auth state error:', error);
-            // If there's an error, force logout to ensure clean state
-            await auth.signOut();
           }
         }
       });
