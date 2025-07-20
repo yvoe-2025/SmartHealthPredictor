@@ -11,10 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
     <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/phosphor-icons"></script>
@@ -31,6 +28,12 @@
         --white: #ffffff;
         --silver: #c0c0c0;
         --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       body {
@@ -156,6 +159,7 @@
         text-align: right;
         color: var(--text-light);
         margin-top: -0.5rem;
+        text-decoration: none;
       }
 
       .forgot-password:hover {
@@ -202,7 +206,9 @@
       }
 
       .auth-footer a {
+        color: var(--secondary-color);
         font-weight: 600;
+        text-decoration: none;
       }
 
       /* Toast Notification */
@@ -220,6 +226,8 @@
         transition: var(--transition);
         z-index: 1000;
         font-size: 0.9rem;
+        text-align: center;
+        max-width: 90%;
       }
 
       .toast.show {
@@ -230,6 +238,10 @@
       .toast.hidden {
         opacity: 0;
         transform: translateX(-50%) translateY(20px);
+      }
+
+      .toast.error {
+        background: var(--accent-color);
       }
 
       /* Loading spinner */
@@ -256,6 +268,18 @@
       .btn-loading .btn-text {
         display: none;
       }
+
+      /* Error messages */
+      .error-message {
+        color: var(--accent-color);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: none;
+      }
+
+      .input-error {
+        border-color: var(--accent-color) !important;
+      }
     </style>
   </head>
 
@@ -271,14 +295,14 @@
         <div class="input-group">
           <label for="loginEmail">Email</label>
           <input type="email" id="loginEmail" required />
+          <div id="loginEmailError" class="error-message"></div>
         </div>
 
         <div class="input-group">
           <label for="loginPassword">Password</label>
           <input type="password" id="loginPassword" required />
-          <a href="/reset-password.html" class="forgot-password"
-            >Forgot password?</a
-          >
+          <a href="reset-password.html" class="forgot-password">Forgot password?</a>
+          <div id="loginPasswordError" class="error-message"></div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-full-width" id="loginBtn">
@@ -320,19 +344,60 @@
 
       // Show toast message
       function showToast(message, isError = false) {
+        if (!toast) return;
+        
         toast.textContent = message;
         toast.className = isError ? 'toast show error' : 'toast show';
         setTimeout(() => {
           toast.className = 'toast hidden';
-        }, 3000);
+        }, 4000);
+      }
+
+      // Show error message for a field
+      function showError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(`${fieldId}Error`);
+        
+        if (!field || !errorElement) return;
+        
+        field.classList.add('input-error');
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+
+      // Clear error message for a field
+      function clearError(fieldId) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(`${fieldId}Error`);
+        
+        if (!field || !errorElement) return;
+        
+        field.classList.remove('input-error');
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
       }
 
       // Handle login form submission
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const email = loginEmail.value;
+        const email = loginEmail.value.trim();
         const password = loginPassword.value;
+        
+        // Clear previous errors
+        clearError('loginEmail');
+        clearError('loginPassword');
+        
+        // Basic validation
+        if (!email) {
+          showError('loginEmail', 'Please enter your email');
+          return;
+        }
+        
+        if (!password) {
+          showError('loginPassword', 'Please enter your password');
+          return;
+        }
         
         try {
           // Show loading state
@@ -342,31 +407,46 @@
           const userCredential = await auth.signInWithEmailAndPassword(email, password);
           const user = userCredential.user;
           
-          // Check if user exists in Firestore (additional verification)
+          // Check email verification
+          if (!user.emailVerified) {
+            await auth.signOut();
+            showToast('Please verify your email before logging in. Check your inbox.', true);
+            return;
+          }
+          
+          // Check if user exists in Firestore
           const userDoc = await db.collection('users').doc(user.uid).get();
           
           if (userDoc.exists) {
-            // User exists in database, redirect to dashboard
+            // Update last login timestamp
+            await db.collection('users').doc(user.uid).update({
+              lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Redirect to dashboard
             showToast('Login successful! Redirecting...');
             setTimeout(() => {
               window.location.href = 'dashboard.html';
             }, 1500);
           } else {
-            // User doesn't exist in database (shouldn't happen if registration is set up properly)
             await auth.signOut();
-            showToast('User not found in database. Please sign up.', true);
+            showToast('Account not properly set up. Please sign up again.', true);
           }
         } catch (error) {
           console.error('Login error:', error);
           let errorMessage = 'Login failed. Please try again.';
           
-          // More specific error messages
           if (error.code === 'auth/user-not-found') {
-            errorMessage = 'No user found with this email.';
+            showError('loginEmail', 'No account found with this email');
+            errorMessage = 'No account found with this email.';
           } else if (error.code === 'auth/wrong-password') {
+            showError('loginPassword', 'Incorrect password');
             errorMessage = 'Incorrect password. Please try again.';
           } else if (error.code === 'auth/too-many-requests') {
             errorMessage = 'Too many attempts. Account temporarily locked.';
+          } else if (error.code === 'auth/invalid-email') {
+            showError('loginEmail', 'Invalid email format');
+            errorMessage = 'Please enter a valid email address.';
           }
           
           showToast(errorMessage, true);
@@ -376,20 +456,29 @@
         }
       });
 
-      // Check if user is already logged in
-      auth.onAuthStateChanged((user) => {
+      // Check if user is already logged in and verified
+      auth.onAuthStateChanged(async (user) => {
         if (user) {
-          // User is signed in, check database
-          db.collection('users').doc(user.uid).get()
-            .then((doc) => {
-              if (doc.exists) {
-                // Redirect to dashboard if already logged in
+          try {
+            // Refresh the user's token to get latest email verification status
+            await user.getIdToken(true);
+            
+            if (user.emailVerified) {
+              const userDoc = await db.collection('users').doc(user.uid).get();
+              if (userDoc.exists) {
+                // Update last login timestamp
+                await db.collection('users').doc(user.uid).update({
+                  lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Redirect to dashboard
                 window.location.href = 'dashboard.html';
               }
-            })
-            .catch((error) => {
-              console.error('Error checking user data:', error);
-            });
+            }
+          } catch (error) {
+            console.error('Auth state error:', error);
+            // If there's an error, force logout to ensure clean state
+            await auth.signOut();
+          }
         }
       });
     </script>
