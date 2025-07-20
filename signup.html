@@ -30,6 +30,12 @@
         --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
 
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
         font-family: "Poppins", sans-serif;
         color: var(--text-color);
@@ -194,7 +200,9 @@
       }
 
       .auth-footer a {
+        color: var(--secondary-color);
         font-weight: 600;
+        text-decoration: none;
       }
 
       /* Terms Checkbox */
@@ -217,6 +225,7 @@
       .terms-text a {
         color: var(--secondary-color);
         font-weight: 500;
+        text-decoration: none;
       }
 
       /* Toast Notification */
@@ -234,6 +243,8 @@
         transition: var(--transition);
         z-index: 1000;
         font-size: 0.9rem;
+        text-align: center;
+        max-width: 90%;
       }
 
       .toast.show {
@@ -244,6 +255,47 @@
       .toast.hidden {
         opacity: 0;
         transform: translateX(-50%) translateY(20px);
+      }
+
+      .toast.error {
+        background: var(--accent-color);
+      }
+
+      /* Loading spinner */
+      .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--white);
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn-loading .spinner {
+        display: inline-block;
+      }
+
+      .btn-loading .btn-text {
+        display: none;
+      }
+
+      /* Error messages */
+      .error-message {
+        color: var(--accent-color);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: none;
+      }
+
+      .input-error {
+        border-color: var(--accent-color) !important;
       }
     </style>
   </head>
@@ -260,26 +312,26 @@
         <div class="input-group">
           <label for="signupName">Full Name</label>
           <input type="text" id="signupName" required />
-          <div id="nameError" class="error-message"></div>
+          <div id="signupNameError" class="error-message"></div>
         </div>
 
         <div class="input-group">
           <label for="signupEmail">Email</label>
           <input type="email" id="signupEmail" required />
-          <div id="emailError" class="error-message"></div>
+          <div id="signupEmailError" class="error-message"></div>
         </div>
 
         <div class="input-group">
           <label for="signupPassword">Password</label>
           <input type="password" id="signupPassword" required />
           <p class="password-hint">Minimum 8 characters with at least one number</p>
-          <div id="passwordError" class="error-message"></div>
+          <div id="signupPasswordError" class="error-message"></div>
         </div>
 
         <div class="input-group">
           <label for="signupConfirmPassword">Confirm Password</label>
           <input type="password" id="signupConfirmPassword" required />
-          <div id="confirmPasswordError" class="error-message"></div>
+          <div id="signupConfirmPasswordError" class="error-message"></div>
         </div>
 
         <div class="terms-checkbox">
@@ -288,7 +340,7 @@
             I agree to the <a href="/terms">Terms of Service</a> and
             <a href="/privacy">Privacy Policy</a>
           </label>
-          <div id="termsError" class="error-message"></div>
+          <div id="agreeTermsError" class="error-message"></div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-full-width" id="signupBtn">
@@ -328,6 +380,8 @@
 
       // Show toast message
       function showToast(message, isError = false) {
+        if (!toast) return;
+        
         toast.textContent = message;
         toast.className = isError ? 'toast show error' : 'toast show';
         setTimeout(() => {
@@ -340,6 +394,8 @@
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(`${fieldId}Error`);
         
+        if (!field || !errorElement) return;
+        
         field.classList.add('input-error');
         errorElement.textContent = message;
         errorElement.style.display = 'block';
@@ -349,6 +405,8 @@
       function clearError(fieldId) {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(`${fieldId}Error`);
+        
+        if (!field || !errorElement) return;
         
         field.classList.remove('input-error');
         errorElement.textContent = '';
@@ -374,11 +432,9 @@
         const agreeTerms = document.getElementById('agreeTerms').checked;
         
         // Clear previous errors
-        clearError('signupName');
-        clearError('signupEmail');
-        clearError('signupPassword');
-        clearError('signupConfirmPassword');
-        clearError('agreeTerms');
+        ['signupName', 'signupEmail', 'signupPassword', 'signupConfirmPassword', 'agreeTerms'].forEach(field => {
+          clearError(field);
+        });
         
         // Validate form
         let isValid = true;
@@ -414,7 +470,10 @@
           isValid = false;
         }
         
-        if (!isValid) return;
+        if (!isValid) {
+          showToast('Please fix the errors in the form', true);
+          return;
+        }
         
         try {
           // Show loading state
@@ -429,17 +488,18 @@
             name: name,
             email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            emailVerified: false
           });
           
-          // Send email verification (optional)
+          // Send email verification
           await user.sendEmailVerification();
           
           // Show success message and redirect to dashboard
-          showToast('Account created successfully! Redirecting to dashboard...');
+          showToast('Account created successfully! Please check your email for verification. Redirecting...');
           setTimeout(() => {
             window.location.href = 'dashboard.html';
-          }, 2000);
+          }, 3000);
           
         } catch (error) {
           console.error('Signup error:', error);
@@ -452,10 +512,12 @@
             errorMessage = 'This email is already registered.';
           } else if (error.code === 'auth/weak-password') {
             showError('signupPassword', 'Password is too weak');
-            errorMessage = 'Password is too weak.';
+            errorMessage = 'Password is too weak. Use at least 8 characters with one number.';
           } else if (error.code === 'auth/invalid-email') {
             showError('signupEmail', 'Invalid email address');
             errorMessage = 'Invalid email address.';
+          } else if (error.code === 'auth/operation-not-allowed') {
+            errorMessage = 'Email/password accounts are not enabled.';
           }
           
           showToast(errorMessage, true);
