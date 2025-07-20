@@ -488,21 +488,14 @@
             name: name,
             email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            emailVerified: false
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
           });
           
-          // Send email verification
-          await user.sendEmailVerification();
+          // Show success message
+          showToast('Account created successfully! You can now sign in.');
           
-          // Sign out the user immediately after signup
-          await auth.signOut();
-          
-          // Show success message and redirect to login page
-          showToast('Account created successfully! Please check your email for verification and sign in.');
-          setTimeout(() => {
-            window.location.href = 'login.html';
-          }, 3000);
+          // Clear form
+          signupForm.reset();
           
         } catch (error) {
           console.error('Signup error:', error);
@@ -519,29 +512,12 @@
           } else if (error.code === 'auth/invalid-email') {
             showError('signupEmail', 'Invalid email address');
             errorMessage = 'Invalid email address.';
-          } else if (error.code === 'auth/operation-not-allowed') {
-            errorMessage = 'Email/password accounts are not enabled.';
           }
           
           showToast(errorMessage, true);
         } finally {
           // Remove loading state
           signupBtn.classList.remove('btn-loading');
-        }
-      });
-
-      // Check if user is already logged in (only redirect if coming back to this page)
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          db.collection('users').doc(user.uid).get()
-            .then((doc) => {
-              if (doc.exists) {
-                window.location.href = 'dashboard.html';
-              }
-            })
-            .catch((error) => {
-              console.error('Error checking user data:', error);
-            });
         }
       });
     </script>
