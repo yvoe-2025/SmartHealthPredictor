@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | SmartHealthPredictor</title>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
     <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
@@ -226,6 +231,31 @@
         opacity: 0;
         transform: translateX(-50%) translateY(20px);
       }
+
+      /* Loading spinner */
+      .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--white);
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn-loading .spinner {
+        display: inline-block;
+      }
+
+      .btn-loading .btn-text {
+        display: none;
+      }
     </style>
   </head>
 
@@ -251,8 +281,9 @@
           >
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full-width">
-          <i class="ph ph-sign-in"></i> Login
+        <button type="submit" class="btn btn-primary btn-full-width" id="loginBtn">
+          <span class="spinner"></span>
+          <span class="btn-text"><i class="ph ph-sign-in"></i> Login</span>
         </button>
       </form>
 
@@ -263,7 +294,104 @@
       <div id="toast" class="toast hidden"></div>
     </div>
 
-    <script type="module" src="../src/js/firebase.js"></script>
-    <script type="module" src="../src/js/auth-email.js"></script>
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyA8JmqKtgdb5BUWVsfqrZYiyKnALx9rb7E",
+        authDomain: "smart-health-prediction-acd6f.firebaseapp.com",
+        projectId: "smart-health-prediction-acd6f",
+        storageBucket: "smart-health-prediction-acd6f.appspot.com",
+        messagingSenderId: "1082594120143",
+        appId: "1:1082594120143:web:0baddb2a34d67ec71f02ba",
+        measurementId: "G-37PQVMQ3Y0"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // DOM elements
+      const loginForm = document.getElementById('loginForm');
+      const loginEmail = document.getElementById('loginEmail');
+      const loginPassword = document.getElementById('loginPassword');
+      const loginBtn = document.getElementById('loginBtn');
+      const toast = document.getElementById('toast');
+
+      // Show toast message
+      function showToast(message, isError = false) {
+        toast.textContent = message;
+        toast.className = isError ? 'toast show error' : 'toast show';
+        setTimeout(() => {
+          toast.className = 'toast hidden';
+        }, 3000);
+      }
+
+      // Handle login form submission
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = loginEmail.value;
+        const password = loginPassword.value;
+        
+        try {
+          // Show loading state
+          loginBtn.classList.add('btn-loading');
+          
+          // Sign in with email and password
+          const userCredential = await auth.signInWithEmailAndPassword(email, password);
+          const user = userCredential.user;
+          
+          // Check if user exists in Firestore (additional verification)
+          const userDoc = await db.collection('users').doc(user.uid).get();
+          
+          if (userDoc.exists) {
+            // User exists in database, redirect to dashboard
+            showToast('Login successful! Redirecting...');
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 1500);
+          } else {
+            // User doesn't exist in database (shouldn't happen if registration is set up properly)
+            await auth.signOut();
+            showToast('User not found in database. Please sign up.', true);
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          let errorMessage = 'Login failed. Please try again.';
+          
+          // More specific error messages
+          if (error.code === 'auth/user-not-found') {
+            errorMessage = 'No user found with this email.';
+          } else if (error.code === 'auth/wrong-password') {
+            errorMessage = 'Incorrect password. Please try again.';
+          } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = 'Too many attempts. Account temporarily locked.';
+          }
+          
+          showToast(errorMessage, true);
+        } finally {
+          // Remove loading state
+          loginBtn.classList.remove('btn-loading');
+        }
+      });
+
+      // Check if user is already logged in
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          // User is signed in, check database
+          db.collection('users').doc(user.uid).get()
+            .then((doc) => {
+              if (doc.exists) {
+                // Redirect to dashboard if already logged in
+                window.location.href = 'dashboard.html';
+              }
+            })
+            .catch((error) => {
+              console.error('Error checking user data:', error);
+            });
+        }
+      });
+    </script>
   </body>
 </html>
