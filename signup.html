@@ -495,10 +495,13 @@
           // Send email verification
           await user.sendEmailVerification();
           
-          // Show success message and redirect to dashboard
-          showToast('Account created successfully! Please check your email for verification. Redirecting...');
+          // Sign out the user immediately after signup
+          await auth.signOut();
+          
+          // Show success message and redirect to login page
+          showToast('Account created successfully! Please check your email for verification and sign in.');
           setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'login.html';
           }, 3000);
           
         } catch (error) {
@@ -527,14 +530,12 @@
         }
       });
 
-      // Check if user is already logged in
+      // Check if user is already logged in (only redirect if coming back to this page)
       auth.onAuthStateChanged((user) => {
         if (user) {
-          // User is signed in, check if they have a profile in database
           db.collection('users').doc(user.uid).get()
             .then((doc) => {
               if (doc.exists) {
-                // Redirect to dashboard if already logged in
                 window.location.href = 'dashboard.html';
               }
             })
