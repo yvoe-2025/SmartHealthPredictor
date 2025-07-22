@@ -1574,48 +1574,187 @@
 
       // Generate mock conditions based on symptoms
       function generateConditions(symptoms) {
-        // This is a simplified mock - in a real app, this would call an ML model
-        const commonConditions = {
-          ["headache"]: [{ name: "Migraine", probability: 65, risk: "medium" }],
-          ["fever"]: [{ name: "Viral Infection", probability: 70, risk: "low" }],
-          ["cough"]: [{ name: "Common Cold", probability: 60, risk: "low" }],
-          ["chest pain"]: [{ name: "Cardiac Concern", probability: 45, risk: "high" }],
-          ["shortness of breath"]: [{ name: "Respiratory Issue", probability: 55, risk: "medium" }],
-          ["fatigue"]: [{ name: "Anemia", probability: 40, risk: "low" }],
-          ["nausea"]: [{ name: "Gastroenteritis", probability: 50, risk: "low" }],
-          ["dizziness"]: [{ name: "Vertigo", probability: 45, risk: "medium" }],
-          ["joint pain"]: [{ name: "Arthritis", probability: 55, risk: "medium" }],
-          ["sore throat"]: [{ name: "Strep Throat", probability: 60, risk: "low" }],
-          ["rash"]: [{ name: "Allergic Reaction", probability: 65, risk: "low" }],
-          ["abdominal pain"]: [{ name: "Gastritis", probability: 50, risk: "medium" }],
-          ["back pain"]: [{ name: "Muscle Strain", probability: 60, risk: "low" }],
-          ["muscle pain"]: [{ name: "Fibromyalgia", probability: 40, risk: "low" }],
-          ["eye pain"]: [{ name: "Conjunctivitis", probability: 55, risk: "low" }],
-          ["ear pain"]: [{ name: "Ear Infection", probability: 65, risk: "low" }],
-          ["swelling"]: [{ name: "Edema", probability: 45, risk: "medium" }],
-          ["blurred vision"]: [{ name: "Refractive Error", probability: 50, risk: "low" }],
-          ["palpitations"]: [{ name: "Arrhythmia", probability: 55, risk: "high" }],
-          ["numbness"]: [{ name: "Peripheral Neuropathy", probability: 45, risk: "medium" }]
-        };
-        
-        // Find matching conditions
-        const matchedConditions = [];
-        symptoms.forEach(symptom => {
-          if (commonConditions[symptom]) {
-            matchedConditions.push(...commonConditions[symptom]);
-          }
-        });
-        
-        // If no matches, return a generic condition
-        if (matchedConditions.length === 0) {
-          return [
-            { name: "General Medical Concern", probability: 50, risk: "medium" }
-          ];
+    // Expanded symptom-condition mapping with more conditions and combinations
+    const symptomConditions = {
+        // Head-related symptoms
+        "headache": [
+            { name: "Tension Headache", probability: 60, risk: "low" },
+            { name: "Migraine", probability: 45, risk: "medium" },
+            { name: "Cluster Headache", probability: 15, risk: "medium" },
+            { name: "Sinusitis", probability: 30, risk: "low" }
+        ],
+        "dizziness": [
+            { name: "Vertigo", probability: 55, risk: "medium" },
+            { name: "Low Blood Pressure", probability: 40, risk: "medium" },
+            { name: "Inner Ear Infection", probability: 35, risk: "low" },
+            { name: "Dehydration", probability: 45, risk: "low" }
+        ],
+        "blurred vision": [
+            { name: "Refractive Error", probability: 65, risk: "low" },
+            { name: "Migraine with Aura", probability: 30, risk: "medium" },
+            { name: "Diabetes", probability: 25, risk: "high" },
+            { name: "Glaucoma", probability: 15, risk: "high" }
+        ],
+
+        // Respiratory symptoms
+        "cough": [
+            { name: "Common Cold", probability: 70, risk: "low" },
+            { name: "Allergies", probability: 45, risk: "low" },
+            { name: "Bronchitis", probability: 40, risk: "medium" },
+            { name: "Asthma", probability: 30, risk: "medium" },
+            { name: "Pneumonia", probability: 20, risk: "high" }
+        ],
+        "shortness of breath": [
+            { name: "Asthma", probability: 50, risk: "medium" },
+            { name: "Anxiety", probability: 40, risk: "low" },
+            { name: "COPD", probability: 30, risk: "high" },
+            { name: "Pulmonary Embolism", probability: 15, risk: "high" }
+        ],
+        "sore throat": [
+            { name: "Viral Pharyngitis", probability: 65, risk: "low" },
+            { name: "Strep Throat", probability: 40, risk: "medium" },
+            { name: "Tonsillitis", probability: 35, risk: "medium" },
+            { name: "Mononucleosis", probability: 20, risk: "medium" }
+        ],
+
+        // Cardiovascular symptoms
+        "chest pain": [
+            { name: "Angina", probability: 40, risk: "high" },
+            { name: "Acid Reflux", probability: 45, risk: "medium" },
+            { name: "Muscle Strain", probability: 35, risk: "low" },
+            { name: "Heart Attack", probability: 20, risk: "high" }
+        ],
+        "palpitations": [
+            { name: "Anxiety", probability: 55, risk: "low" },
+            { name: "Arrhythmia", probability: 40, risk: "high" },
+            { name: "Hyperthyroidism", probability: 30, risk: "medium" },
+            { name: "Electrolyte Imbalance", probability: 25, risk: "medium" }
+        ],
+
+        // Gastrointestinal symptoms
+        "abdominal pain": [
+            { name: "Gastritis", probability: 50, risk: "medium" },
+            { name: "Irritable Bowel Syndrome", probability: 45, risk: "low" },
+            { name: "Food Poisoning", probability: 40, risk: "medium" },
+            { name: "Appendicitis", probability: 20, risk: "high" }
+        ],
+        "nausea": [
+            { name: "Gastroenteritis", probability: 60, risk: "low" },
+            { name: "Food Poisoning", probability: 45, risk: "medium" },
+            { name: "Migraine", probability: 30, risk: "medium" },
+            { name: "Pregnancy", probability: 25, risk: "low" }
+        ],
+        "diarrhea": [
+            { name: "Viral Gastroenteritis", probability: 70, risk: "low" },
+            { name: "Food Intolerance", probability: 45, risk: "low" },
+            { name: "Bacterial Infection", probability: 35, risk: "medium" },
+            { name: "Inflammatory Bowel Disease", probability: 20, risk: "high" }
+        ],
+
+        // Musculoskeletal symptoms
+        "back pain": [
+            { name: "Muscle Strain", probability: 65, risk: "low" },
+            { name: "Herniated Disc", probability: 35, risk: "medium" },
+            { name: "Arthritis", probability: 30, risk: "medium" },
+            { name: "Kidney Infection", probability: 20, risk: "high" }
+        ],
+        "joint pain": [
+            { name: "Osteoarthritis", probability: 55, risk: "medium" },
+            { name: "Rheumatoid Arthritis", probability: 35, risk: "high" },
+            { name: "Gout", probability: 30, risk: "medium" },
+            { name: "Lupus", probability: 15, risk: "high" }
+        ],
+        "muscle pain": [
+            { name: "Fibromyalgia", probability: 40, risk: "low" },
+            { name: "Viral Infection", probability: 45, risk: "low" },
+            { name: "Chronic Fatigue Syndrome", probability: 25, risk: "medium" },
+            { name: "Electrolyte Imbalance", probability: 30, risk: "medium" }
+        ],
+
+        // General symptoms
+        "fever": [
+            { name: "Viral Infection", probability: 70, risk: "low" },
+            { name: "Bacterial Infection", probability: 45, risk: "medium" },
+            { name: "Flu", probability: 60, risk: "medium" },
+            { name: "COVID-19", probability: 40, risk: "medium" }
+        ],
+        "fatigue": [
+            { name: "Anemia", probability: 45, risk: "low" },
+            { name: "Sleep Deprivation", probability: 60, risk: "low" },
+            { name: "Depression", probability: 40, risk: "medium" },
+            { name: "Chronic Fatigue Syndrome", probability: 25, risk: "medium" },
+            { name: "Hypothyroidism", probability: 35, risk: "high" }
+        ],
+        "rash": [
+            { name: "Allergic Reaction", probability: 65, risk: "low" },
+            { name: "Eczema", probability: 45, risk: "low" },
+            { name: "Psoriasis", probability: 30, risk: "medium" },
+            { name: "Lyme Disease", probability: 15, risk: "high" }
+        ]
+    };
+
+    // Special condition combinations that modify probabilities
+    const conditionCombinations = {
+        ["headache,nausea"]: [
+            { name: "Migraine", probability: 75, risk: "medium" },
+            { name: "Concussion", probability: 30, risk: "high" }
+        ],
+        ["fever,cough"]: [
+            { name: "Flu", probability: 80, risk: "medium" },
+            { name: "COVID-19", probability: 65, risk: "medium" },
+            { name: "Pneumonia", probability: 40, risk: "high" }
+        ],
+        ["chest pain,shortness of breath"]: [
+            { name: "Heart Attack", probability: 45, risk: "high" },
+            { name: "Pulmonary Embolism", probability: 35, risk: "high" },
+            { name: "Angina", probability: 50, risk: "high" }
+        ],
+        ["abdominal pain,nausea"]: [
+            { name: "Gastroenteritis", probability: 70, risk: "medium" },
+            { name: "Food Poisoning", probability: 60, risk: "medium" },
+            { name: "Appendicitis", probability: 30, risk: "high" }
+        ],
+        ["joint pain,fatigue"]: [
+            { name: "Rheumatoid Arthritis", probability: 55, risk: "high" },
+            { name: "Lupus", probability: 40, risk: "high" }
+        ]
+    };
+
+    // First check for specific symptom combinations
+    const symptomKey = symptoms.sort().join(',');
+    if (conditionCombinations[symptomKey]) {
+        return conditionCombinations[symptomKey].slice(0, 3); // Return top 3 for combinations
+    }
+
+    // If no specific combination, look up individual symptoms
+    const matchedConditions = [];
+    const seenConditions = new Set();
+
+    symptoms.forEach(symptom => {
+        if (symptomConditions[symptom]) {
+            symptomConditions[symptom].forEach(condition => {
+                if (!seenConditions.has(condition.name)) {
+                    matchedConditions.push(condition);
+                    seenConditions.add(condition.name);
+                }
+            });
         }
+    });
+
+    // If no matches, return a generic condition
+    if (matchedConditions.length === 0) {
+        return [
+            { name: "General Medical Concern", probability: 50, risk: "medium" }
+        ];
+    }
+
+    // Sort by probability (highest first) and return top 3
+    return matchedConditions
+        .sort((a, b) => b.probability - a.probability)
+        .slice(0, 3);
+}
         
-        // Return top 2 conditions
-        return matchedConditions.slice(0, 2);
-      }
+       
 
       // Generate mock recommendations
       function generateRecommendations(symptoms) {
